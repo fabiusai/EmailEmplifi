@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generatore Email per post Social</title>
+    <title>Generatore Report Social</title>
     <link rel="icon" href="favicon.ico">
     
     <!-- Libreria per leggere i file Excel (esterna) -->
@@ -11,78 +11,336 @@
 
     <!-- INIZIO STILE CSS -->
     <style>
-        /* ... CSS identico alla versione precedente ... */
+        /* Importazione di un font sans-serif pulito */
         @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
-        :root{--main-blue:#00338D;--main-yellow:#FFCC00;--light-gray:#f4f6f9;--medium-gray:#e9ecef;--dark-gray:#6c757d;--text-color:#212529;--card-shadow:0 4px 12px rgba(0,0,0,0.08);--border-radius:8px}
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:'Titillium Web',sans-serif;background-color:var(--light-gray);color:var(--text-color);line-height:1.6}
-        .container{max-width:1200px;margin:0 auto;padding:2rem}
-        header{text-align:center;margin-bottom:2.5rem;border-bottom:3px solid var(--main-yellow);padding-bottom:1.5rem;position:relative}
-        header h1{color:var(--main-blue);font-size:2.5rem;margin-bottom:.5rem}
-        header p{color:var(--dark-gray);font-size:1.1rem}
-        main{display:grid;grid-template-columns:1fr 1.2fr;gap:2rem}
-        .card{background-color:#fff;border-radius:var(--border-radius);padding:1.5rem 2rem;box-shadow:var(--card-shadow);border-top:4px solid var(--main-blue)}
-        .card h2{color:var(--main-blue);margin-bottom:1.5rem;font-size:1.4rem;border-bottom:1px solid var(--medium-gray);padding-bottom:.5rem}
-        .form-group{margin-bottom:1.5rem}
-        .form-group label{display:block;font-weight:600;margin-bottom:.5rem;color:#343a40}
-        input[type=text],input[type=email]{width:100%;padding:.75rem;border:1px solid #ced4da;border-radius:4px;font-size:1rem;transition:border-color .2s,box-shadow .2s}
-        input[type=text]:focus,input[type=email]:focus{outline:0;border-color:var(--main-blue);box-shadow:0 0 0 3px rgba(0,51,141,.15)}
-        fieldset{border:none;padding:0}
-        legend{font-weight:600;margin-bottom:.75rem;font-size:1rem;color:#343a40}
-        .radio-group{display:flex;gap:1.5rem}
-        .radio-group label{display:flex;align-items:center;gap:.5rem;font-weight:400;cursor:pointer}
-        .actions-card{border-top-color:var(--main-yellow)}
-        .actions-card h2{color:var(--main-blue)}
-        .btn{display:block;width:100%;padding:.8rem 1rem;font-size:1rem;font-weight:700;text-align:center;border:none;border-radius:4px;cursor:pointer;transition:background-color .2s,transform .1s}
-        .btn:active{transform:translateY(1px)}
-        .btn-upload{background-color:var(--main-blue);color:#fff;margin-bottom:1rem}
-        .btn-upload:hover{background-color:#002266}
-        .actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-        #save-btn{background-color:var(--main-yellow);color:var(--main-blue)}
-        #save-btn:hover{background-color:#e6b800}
-        .btn-secondary{background-color:#6c757d;color:#fff}
-        .btn-secondary:hover{background-color:#5a6268}
-        .output-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
-        .output-actions{display:flex;gap:.75rem}
-        .btn-icon{width:36px;height:36px;background-color:transparent;border:1px solid var(--medium-gray);border-radius:50%;cursor:pointer;background-repeat:no-repeat;background-position:center;transition:background-color .2s,border-color .2s}
-        .btn-icon:hover{background-color:var(--light-gray);border-color:var(--dark-gray)}
-        #copy-btn{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2300338D' class='bi bi-clipboard' viewBox='0 0 16 16'%3E%3Cpath d='M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z'/%3E%3Cpath d='M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z'/%3E%3C/svg%3E")}
-        #email-btn{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2300338D' class='bi bi-envelope' viewBox='0 0 16 16'%3E%3Cpath d='M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.758 2.855L15 11.114V5.383zm-.034 6.878L9.271 8.82 8 9.583 6.728 8.82l-5.694 3.44A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.739zM1 11.114l4.758-2.876L1 5.383v5.73z'/%3E%3C/svg%3E")}
-        #output-text{background-color:var(--light-gray);padding:1rem;border-radius:4px;min-height:200px;white-space:pre-wrap;word-wrap:break-word;font-size:.95rem;color:#333;border:1px solid var(--medium-gray)}
-        @media (max-width:992px){main{grid-template-columns:1fr}}
-        @media (max-width:576px){.container{padding:1rem}header h1{font-size:2rem}.card{padding:1.5rem}.actions-grid{grid-template-columns:1fr}}
+
+        :root {
+            --main-blue: #00338D;
+            --main-yellow: #FFCC00;
+            --light-gray: #f4f6f9;
+            --medium-gray: #e9ecef;
+            --dark-gray: #6c757d;
+            --text-color: #212529;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --border-radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Titillium Web', sans-serif;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            border-bottom: 3px solid var(--main-yellow);
+            padding-bottom: 1.5rem;
+            position: relative;
+        }
+
+        header h1 {
+            color: var(--main-blue);
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--dark-gray);
+            font-size: 1.1rem;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border-radius: var(--border-radius);
+            padding: 1.5rem 2rem;
+            box-shadow: var(--card-shadow);
+            border-top: 4px solid var(--main-blue);
+        }
+
+        .card h2 {
+            color: var(--main-blue);
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+            border-bottom: 1px solid var(--medium-gray);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #343a40;
+        }
+
+        input[type="text"],
+        input[type="email"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus {
+            outline: none;
+            border-color: var(--main-blue);
+            box-shadow: 0 0 0 3px rgba(0, 51, 141, 0.15);
+        }
+
+        fieldset {
+            border: none;
+            padding: 0;
+        }
+
+        legend {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+            color: #343a40;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 400;
+            cursor: pointer;
+        }
+
+        /* Azioni e Bottoni */
+        .actions-card {
+            border-top-color: var(--main-yellow);
+        }
+        .actions-card h2 {
+            color: var(--main-blue);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: center;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-upload {
+            background-color: var(--main-blue);
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+        .btn-upload:hover {
+            background-color: #002266;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        #save-btn {
+            background-color: var(--main-yellow);
+            color: var(--main-blue);
+        }
+        #save-btn:hover {
+            background-color: #e6b800;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: #fff;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* Sezione Output */
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .output-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            background-color: transparent;
+            border: 1px solid var(--medium-gray);
+            border-radius: 50%;
+            cursor: pointer;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        .btn-icon:hover {
+            background-color: var(--light-gray);
+            border-color: var(--dark-gray);
+        }
+
+        #copy-btn {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2300338D' class='bi bi-clipboard' viewBox='0 0 16 16'%3E%3Cpath d='M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z'/%3E%3Cpath d='M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z'/%3E%3C/svg%3E");
+        }
+
+        #email-btn {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2300338D' class='bi bi-envelope' viewBox='0 0 16 16'%3E%3Cpath d='M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.758 2.855L15 11.114V5.383zm-.034 6.878L9.271 8.82 8 9.583 6.728 8.82l-5.694 3.44A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.739zM1 11.114l4.758-2.876L1 5.383v5.73z'/%3E%3C/svg%3E");
+        }
+
+        #output-text {
+            background-color: var(--light-gray);
+            padding: 1rem;
+            border-radius: 4px;
+            min-height: 200px;
+            white-space: pre-wrap; /* Mantiene la formattazione e va a capo */
+            word-wrap: break-word;
+            font-size: 0.95rem;
+            color: #333;
+            border: 1px solid var(--medium-gray);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding: 1rem;
+            }
+            header h1 {
+                font-size: 2rem;
+            }
+            .card {
+                padding: 1.5rem;
+            }
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
     <!-- FINE STILE CSS -->
 </head>
 <body>
 
     <div class="container">
-        <!-- ... HTML del body identico alla versione precedente ... -->
-        <header><h1>Generatore di Email per post Social</h1><p>Carica un file Excel e compila i campi per generare il testo della comunicazione.</p></header>
+        <header>
+            <h1>Generatore di Report Social</h1>
+            <p>Carica un file Excel e compila i campi per generare il testo della comunicazione.</p>
+        </header>
+
         <main>
             <section class="form-section">
                 <form id="report-form">
+                    
                     <div class="card">
                         <h2>1. Dati del Destinatario</h2>
-                        <div class="form-group"><label for="recipient-name">Nome destinatario email</label><input type="text" id="recipient-name" name="recipient-name" placeholder="Es. Mario Rossi" required></div>
-                        <div class="form-group"><label for="recipient-email">Indirizzo email (opzionale)</label><input type="email" id="recipient-email" name="recipient-email" placeholder="Es. mario.rossi@email.com"></div>
+                        <div class="form-group">
+                            <label for="recipient-name">Nome destinatario email</label>
+                            <input type="text" id="recipient-name" name="recipient-name" placeholder="Es. Mario Rossi" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipient-email">Indirizzo email (opzionale)</label>
+                            <input type="email" id="recipient-email" name="recipient-email" placeholder="Es. mario.rossi@email.com">
+                        </div>
                     </div>
+
                     <div class="card">
                         <h2>2. Opzioni di Formattazione</h2>
-                        <div class="form-group"><fieldset><legend>Saluto</legend><div class="radio-group"><label><input type="radio" name="saluto" value="Ciao" checked> Ciao</label><label><input type="radio" name="saluto" value="Buongiorno"> Buongiorno</label><label><input type="radio" name="saluto" value="Buonasera"> Buonasera</label></div></fieldset></div>
-                        <div class="form-group"><fieldset><legend>Mostra canali social</legend><div class="radio-group"><label><input type="radio" name="show-channels" value="si"> Sì</label><label><input type="radio" name="show-channels" value="no" checked> No</label></div></fieldset></div>
+                        <div class="form-group">
+                            <fieldset>
+                                <legend>Saluto</legend>
+                                <div class="radio-group">
+                                    <label><input type="radio" name="saluto" value="Ciao" checked> Ciao</label>
+                                    <label><input type="radio" name="saluto" value="Buongiorno"> Buongiorno</label>
+                                    <label><input type="radio" name="saluto" value="Buonasera"> Buonasera</label>
+                                </div>
+                            </fieldset>
+                        </div>
+                        <div class="form-group">
+                            <fieldset>
+                                <legend>Mostra canali social</legend>
+                                <div class="radio-group">
+                                    <label><input type="radio" name="show-channels" value="si"> Sì</label>
+                                    <label><input type="radio" name="show-channels" value="no" checked> No</label>
+                                </div>
+                            </fieldset>
+                        </div>
                     </div>
+                    
                     <div class="card actions-card">
                         <h2>3. Azioni</h2>
-                        <label for="excel-file-input" class="btn btn-upload" id="upload-label">Carica File Excel</label>
-                        <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display:none">
-                        <div class="actions-grid"><button type="button" id="save-btn" class="btn">Salva Dati</button><button type="button" id="reset-btn" class="btn btn-secondary">Resetta Form</button></div>
+                         <!-- Bottone per caricare l'Excel -->
+                        <label for="excel-file-input" class="btn btn-upload" id="upload-label">
+                            Carica File Excel
+                        </label>
+                        <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display: none;">
+
+                        <div class="actions-grid">
+                            <button type="button" id="save-btn" class="btn">Salva Dati</button>
+                            <button type="button" id="reset-btn" class="btn btn-secondary">Resetta Form</button>
+                        </div>
                     </div>
+
                 </form>
             </section>
+
             <section class="output-section">
                 <div class="card">
-                    <div class="output-header"><h2>Anteprima Report Generato</h2><div class="output-actions"><button id="copy-btn" class="btn-icon" title="Copia testo"></button><button id="email-btn" class="btn-icon" title="Invia email"></button></div></div>
+                    <div class="output-header">
+                        <h2>Anteprima Report Generato</h2>
+                        <div class="output-actions">
+                            <button id="copy-btn" class="btn-icon" title="Copia testo"></button>
+                            <button id="email-btn" class="btn-icon" title="Invia email"></button>
+                        </div>
+                    </div>
                     <pre id="output-text">Il report generato apparirà qui...</pre>
                 </div>
             </section>
@@ -92,22 +350,211 @@
     <!-- INIZIO SCRIPT JAVASCRIPT -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // ... tutto lo script JS precedente è identico ...
-            const form=document.getElementById("report-form"),recipientNameInput=document.getElementById("recipient-name"),recipientEmailInput=document.getElementById("recipient-email"),fileInput=document.getElementById("excel-file-input"),uploadLabel=document.getElementById("upload-label"),saveBtn=document.getElementById("save-btn"),resetBtn=document.getElementById("reset-btn"),copyBtn=document.getElementById("copy-btn"),emailBtn=document.getElementById("email-btn"),outputText=document.getElementById("output-text");let excelData=null;const generateReport=()=>{if(!recipientNameInput.value)return void(outputText.textContent="Per favore, compila il campo 'Nome destinatario'.");if(!excelData)return void(outputText.textContent="Per favore, carica un file Excel per continuare.");const e=new FormData(form),t=e.get("saluto"),l=recipientNameInput.value.trim(),o="si"===e.get("show-channels"),n=getArgumentFromExcel(excelData);if(!n)return void(outputText.textContent="Errore: Impossibile trovare la colonna 'Labels' o un argomento valido nel file Excel.");const a=getLinksFromExcel(excelData,o);if(!a)return void(outputText.textContent="Errore: Impossibile trovare la colonna 'View on platform' o dei link validi nel file Excel.");const s=`${t} ${l},
-ti confermo che siamo online sui nostri canali social con i post dedicati all'argomento «${n}».
+
+            // Riferimenti agli elementi del DOM
+            const form = document.getElementById('report-form');
+            const recipientNameInput = document.getElementById('recipient-name');
+            const recipientEmailInput = document.getElementById('recipient-email');
+            const fileInput = document.getElementById('excel-file-input');
+            const uploadLabel = document.getElementById('upload-label');
+            const saveBtn = document.getElementById('save-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const copyBtn = document.getElementById('copy-btn');
+            const emailBtn = document.getElementById('email-btn');
+            const outputText = document.getElementById('output-text');
+            
+            let excelData = null;
+
+            const generateReport = () => {
+                if (!recipientNameInput.value) {
+                    outputText.textContent = "Per favore, compila il campo 'Nome destinatario'.";
+                    return;
+                }
+                if (!excelData) {
+                    outputText.textContent = "Per favore, carica un file Excel per continuare.";
+                    return;
+                }
+                const formData = new FormData(form);
+                const saluto = formData.get('saluto');
+                const recipientName = recipientNameInput.value.trim();
+                const showChannels = formData.get('show-channels') === 'si';
+                const argomento = getArgumentFromExcel(excelData);
+                if (!argomento) {
+                    outputText.textContent = "Errore: Impossibile trovare la colonna 'Labels' o un argomento valido nel file Excel.";
+                    return;
+                }
+                const linksText = getLinksFromExcel(excelData, showChannels);
+                if (!linksText) {
+                    outputText.textContent = "Errore: Impossibile trovare la colonna 'View on platform' o dei link validi nel file Excel.";
+                    return;
+                }
+                const report = `${saluto} ${recipientName},
+ti confermo che siamo online sui nostri canali social con i post dedicati all'argomento «${argomento}».
 
 I link dei post sono i seguenti:
-${a}
+${linksText}
 
 Un saluto,
-Fabio.`;outputText.textContent=s},getArgumentFromExcel=e=>{if(!e||0===e.length)return null;const t=Object.keys(e[0]).find(e=>"labels"===e.toLowerCase().trim());if(!t)return null;for(const l of e)if(l[t])return String(l[t]).split(";")[0].trim().replace(/^#/,"");return null},getLinksFromExcel=(e,t)=>{if(!e||0===e.length)return null;const l=Object.keys(e[0]).find(e=>"view on platform"===e.toLowerCase().trim());if(!l)return null;const o=e.map(e=>e[l]).filter(e=>e&&String(e).startsWith("http"));if(0===o.length)return null;if(!t)return o.join("\n");{const e={Facebook:[],"X (Twitter)":[],Instagram:[],Youtube:[],Altro:[]};o.forEach(t=>{const l=String(t);l.includes("facebook.com")?e.Facebook.push(l):l.includes("twitter.com")||l.includes("x.com")?e["X (Twitter)"].push(l):l.includes("instagram.com")?e.Instagram.push(l):l.includes("youtube.com")||l.includes("youtu.be")?e.Youtube.push(l):e.Altro.push(l)});let t="";for(const l in e)e[l].length>0&&(t+=`\n${l}:\n`,t+=e[l].join("\n"),t+="\n");return t.trim()}};form.addEventListener("input",generateReport),fileInput.addEventListener("change",e=>{const t=e.target.files[0];if(!t)return;setButtonFeedback(uploadLabel,"Caricamento...",!1);const l=new FileReader;l.onload=e=>{try{const t=new Uint8Array(e.target.result),l=XLSX.read(t,{type:"array"}),o=l.SheetNames[0],n=l.Sheets[o];excelData=XLSX.utils.sheet_to_json(n),setButtonFeedback(uploadLabel,"✓ Fatto! File Caricato",!0,3e3,"Carica File Excel"),generateReport()}catch(e){console.error("Errore nel parsing del file Excel:",e),excelData=null,outputText.textContent="Errore: il file selezionato non è un formato Excel valido o è corrotto.",setButtonFeedback(uploadLabel,"Errore nel caricamento",!0,3e3,"Carica File Excel")}},l.readAsArrayBuffer(t)}),saveBtn.addEventListener("click",()=>{const e={name:recipientNameInput.value,email:recipientEmailInput.value,saluto:form.saluto.value,showChannels:form["show-channels"].value};localStorage.setItem("reportFormData",JSON.stringify(e)),setButtonFeedback(saveBtn,"✓ Dati Salvati!",!0,2e3,"Salva Dati")});const loadData=()=>{const e=localStorage.getItem("reportFormData");if(e){const t=JSON.parse(e);recipientNameInput.value=t.name||"",recipientEmailInput.value=t.email||"",form.saluto.value=t.saluto||"Ciao",form["show-channels"].value=t.showChannels||"no"}};resetBtn.addEventListener("click",()=>{form.reset(),recipientNameInput.value="",recipientEmailInput.value="",excelData=null,outputText.textContent="Il report generato apparirà qui...",localStorage.removeItem("reportFormData"),fileInput.value="",setButtonFeedback(resetBtn,"✓ Form resettato",!0,2e3,"Resetta Form"),setButtonFeedback(uploadLabel,"Carica File Excel",!1)}),copyBtn.addEventListener("click",()=>{outputText.textContent&&"Il report generato apparirà qui..."!==outputText.textContent&&"Per p"!==outputText.textContent.slice(0,5)&&navigator.clipboard.writeText(outputText.textContent).then(()=>{copyBtn.style.backgroundColor="var(--main-yellow)",setTimeout(()=>{copyBtn.style.backgroundColor="transparent"},1500)}).catch(e=>{console.error("Errore durante la copia:",e),alert("Impossibile copiare il testo.")})}),emailBtn.addEventListener("click",()=>{const e=recipientEmailInput.value;if(!e)return void alert("Per favore, inserisci un indirizzo email per usare questa funzione.");const t="Report Social",l=encodeURIComponent(outputText.textContent);
+Fabio.`;
+                outputText.textContent = report;
+            };
             
-            // La riga seguente è lo standard corretto per i link mailto:.
-            // Attiva il client di posta esterno senza creare schede vuote nel browser,
-            // preservando la pagina corrente per l'utente.
-            window.location.href=`mailto:${e}?subject=${t}&body=${l}`
+            const getArgumentFromExcel = (data) => {
+                if (!data || data.length === 0) return null;
+                const header = Object.keys(data[0]);
+                const labelsKey = header.find(key => key.toLowerCase().trim() === 'labels');
+                if (!labelsKey) return null;
+                for (const row of data) {
+                    if (row[labelsKey]) {
+                        const labelValue = String(row[labelsKey]);
+                        return labelValue.split(';')[0].trim().replace(/^#/, '');
+                    }
+                }
+                return null;
+            };
+
+            const getLinksFromExcel = (data, showChannels) => {
+                if (!data || data.length === 0) return null;
+                const header = Object.keys(data[0]);
+                const linksKey = header.find(key => key.toLowerCase().trim() === 'view on platform');
+                if (!linksKey) return null;
+                const links = data.map(row => row[linksKey]).filter(link => link && String(link).startsWith('http'));
+                if (links.length === 0) return null;
+                if (!showChannels) {
+                    return links.join('\n');
+                } else {
+                    const channels = {'Facebook': [], 'X (Twitter)': [], 'Instagram': [], 'Youtube': [], 'Altro': []};
+                    links.forEach(link => {
+                        const url = String(link);
+                        if (url.includes('facebook.com')) channels.Facebook.push(url);
+                        else if (url.includes('twitter.com') || url.includes('x.com')) channels['X (Twitter)'].push(url);
+                        else if (url.includes('instagram.com')) channels.Instagram.push(url);
+                        else if (url.includes('youtube.com') || url.includes('youtu.be')) channels.Youtube.push(url);
+                        else channels.Altro.push(url);
+                    });
+                    let formattedText = '';
+                    for (const channel in channels) {
+                        if (channels[channel].length > 0) {
+                            formattedText += `\n${channel}:\n`;
+                            formattedText += channels[channel].join('\n');
+                            formattedText += '\n';
+                        }
+                    }
+                    return formattedText.trim();
+                }
+            };
             
-            });const setButtonFeedback=(e,t,l=!1,o=2e3,n="")=>{e.textContent=t,l&&setTimeout(()=>{e.textContent=n},o)};loadData()
+            form.addEventListener('input', generateReport);
+            
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                setButtonFeedback(uploadLabel, "Caricamento...", false);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        excelData = XLSX.utils.sheet_to_json(worksheet);
+                        setButtonFeedback(uploadLabel, "✓ Fatto! File Caricato", true, 3000, "Carica File Excel");
+                        generateReport();
+                    } catch (error) {
+                        console.error("Errore nel parsing del file Excel:", error);
+                        excelData = null;
+                        outputText.textContent = "Errore: il file selezionato non è un formato Excel valido o è corrotto.";
+                        setButtonFeedback(uploadLabel, "Errore nel caricamento", true, 3000, "Carica File Excel");
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+
+            saveBtn.addEventListener('click', () => {
+                const dataToSave = {
+                    name: recipientNameInput.value,
+                    email: recipientEmailInput.value,
+                    saluto: form.saluto.value,
+                    showChannels: form['show-channels'].value
+                };
+                localStorage.setItem('reportFormData', JSON.stringify(dataToSave));
+                setButtonFeedback(saveBtn, "✓ Dati Salvati!", true, 2000, "Salva Dati");
+            });
+            
+            const loadData = () => {
+                const savedData = localStorage.getItem('reportFormData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    recipientNameInput.value = data.name || '';
+                    recipientEmailInput.value = data.email || '';
+                    form.saluto.value = data.saluto || 'Ciao';
+                    form['show-channels'].value = data.showChannels || 'no';
+                }
+            };
+
+            resetBtn.addEventListener('click', () => {
+                form.reset();
+                recipientNameInput.value = '';
+                recipientEmailInput.value = '';
+                excelData = null;
+                outputText.textContent = "Il report generato apparirà qui...";
+                localStorage.removeItem('reportFormData');
+                fileInput.value = '';
+                setButtonFeedback(resetBtn, "✓ Form resettato", true, 2000, "Resetta Form");
+                setButtonFeedback(uploadLabel, "Carica File Excel", false);
+            });
+            
+            copyBtn.addEventListener('click', () => {
+                if (outputText.textContent && outputText.textContent !== "Il report generato apparirà qui..." && !outputText.textContent.startsWith("Errore") && !outputText.textContent.startsWith("Per favore")) {
+                    navigator.clipboard.writeText(outputText.textContent).then(() => {
+                        copyBtn.style.backgroundColor = 'var(--main-yellow)';
+                        setTimeout(() => { copyBtn.style.backgroundColor = 'transparent'; }, 1500);
+                    }).catch(err => {
+                        console.error('Errore durante la copia:', err);
+                        alert('Impossibile copiare il testo.');
+                    });
+                }
+            });
+
+            // Invia email - LOGICA AGGIORNATA
+            emailBtn.addEventListener('click', () => {
+                const email = recipientEmailInput.value;
+                if (!email) {
+                    alert("Per favore, inserisci un indirizzo email per usare questa funzione.");
+                    return;
+                }
+                const subject = "Report Social";
+                const body = encodeURIComponent(outputText.textContent);
+
+                // --- INIZIO LOGICA CORRETTA ---
+                // Creo un link (<a>) invisibile in memoria.
+                const mailtoLink = document.createElement('a');
+                
+                // Imposto l'indirizzo mailto.
+                mailtoLink.href = `mailto:${email}?subject=${subject}&body=${body}`;
+                
+                // Imposto l'apertura in una nuova scheda. Questo è il passaggio
+                // chiave per evitare il loop con i client di posta web.
+                mailtoLink.target = '_blank';
+                
+                // Aggiungo per sicurezza e buone pratiche.
+                mailtoLink.rel = 'noopener noreferrer';
+
+                // Simulo il click dell'utente sul link per attivarlo.
+                mailtoLink.click();
+                // --- FINE LOGICA CORRETTA ---
+            });
+
+            const setButtonFeedback = (button, message, temporary = false, duration = 2000, originalText = '') => {
+                button.textContent = message;
+                if (temporary) {
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                    }, duration);
+                }
+            };
+            
+            loadData();
         });
     </script>
     <!-- FINE SCRIPT JAVASCRIPT -->
