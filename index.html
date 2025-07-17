@@ -9,7 +9,7 @@
     <!-- Libreria per leggere i file Excel (esterna) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    <!-- CSS Integrato -->
+    <!-- CSS Integrato (invariato) -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
         :root{--main-blue:#00338D;--main-yellow:#FFCC00;--light-gray:#f4f6f9;--medium-gray:#e9ecef;--dark-gray:#6c757d;--text-color:#212529;--card-shadow:0 4px 12px rgba(0,0,0,0.08);--border-radius:8px}
@@ -56,7 +56,6 @@
 <body>
 
     <div class="container">
-        <!-- L'HTML rimane identico -->
         <header><h1>Generatore di Report Social</h1><p>Carica un file Excel e compila i campi per generare il testo della comunicazione.</p></header>
         <main>
             <section class="form-section">
@@ -68,10 +67,10 @@
         </main>
     </div>
 
-    <!-- JavaScript con la nuova logica per il tasto Email -->
+    <!-- JavaScript con logica aggiornata e completa -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Riferimenti agli elementi del DOM (invariati)
+            // Riferimenti agli elementi del DOM
             const form = document.getElementById('report-form');
             const recipientNameInput = document.getElementById('recipient-name');
             const recipientEmailInput = document.getElementById('recipient-email');
@@ -85,54 +84,255 @@
             
             let excelData = null;
 
-            // Tutte le funzioni di generazione e parsing rimangono invariate
-            const generateReport=()=>{if(!recipientNameInput.value)return void(outputText.textContent="Per favore, compila il campo 'Nome destinatario'.");if(!excelData)return void(outputText.textContent="Per favore, carica un file Excel per continuare.");const e=new FormData(form),t=e.get("saluto"),o=recipientNameInput.value.trim(),n="si"===e.get("show-channels"),l=getArgumentFromExcel(excelData);if(!l)return void(outputText.textContent="Errore: Impossibile trovare la colonna 'Labels' o un argomento valido nel file Excel.");const a=getLinksFromExcel(excelData,n);if(!a)return void(outputText.textContent="Errore: Impossibile trovare la colonna 'View on platform' o dei link validi nel file Excel.");const i=`${t} ${o},
-ti confermo che siamo online sui nostri canali social con i post dedicati all'argomento «${l}».
+            // --- FUNZIONI DI LOGICA ---
+
+            /**
+             * Trova il nome di una colonna in modo case-insensitive e ignorando spazi.
+             */
+            const findColumnName = (keys, nameToFind) => {
+                return keys.find(key => key.toLowerCase().trim() === nameToFind);
+            };
+
+            /**
+             * Estrae l'argomento principale dalla colonna 'Labels'.
+             */
+            const getArgumentFromExcel = (data) => {
+                if (!data || data.length === 0) return null;
+                const labelsColumn = findColumnName(Object.keys(data[0]), 'labels');
+                if (!labelsColumn) return null;
+                for (const row of data) {
+                    if (row[labelsColumn]) {
+                        return String(row[labelsColumn]).split(';')[0].trim().replace(/^#/, '');
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Estrae e formatta i link dall'Excel.
+             * Priorità 1: Colonna 'Platform'.
+             * Priorità 2: Inferisce dall'URL.
+             * Aggiunto supporto per LinkedIn.
+             */
+            const getLinksFromExcel = (data, showChannels) => {
+                if (!data || data.length === 0) return null;
+
+                const linkColumn = findColumnName(Object.keys(data[0]), 'view on platform');
+                const platformColumn = findColumnName(Object.keys(data[0]), 'platform');
+
+                if (!linkColumn) return null;
+
+                const validRows = data.filter(row => row[linkColumn] && String(row[linkColumn]).startsWith('http'));
+                if (validRows.length === 0) return null;
+
+                if (!showChannels) {
+                    return validRows.map(row => row[linkColumn]).join('\n');
+                }
+
+                const platformDisplayNameMap = {
+                    'facebook': 'Facebook',
+                    'twitter': 'X (Twitter)',
+                    'x': 'X (Twitter)',
+                    'instagram': 'Instagram',
+                    'linkedin': 'LinkedIn',
+                    'youtube': 'Youtube',
+                };
+
+                const groupedLinks = {};
+
+                validRows.forEach(row => {
+                    const link = row[linkColumn];
+                    let platformKey = 'Altro';
+
+                    if (platformColumn && row[platformColumn]) {
+                        const platformFromCell = String(row[platformColumn]).toLowerCase().trim();
+                        platformKey = platformDisplayNameMap[platformFromCell] || (platformFromCell.charAt(0).toUpperCase() + platformFromCell.slice(1));
+                    } else {
+                        const url = String(link).toLowerCase();
+                        if (url.includes('facebook.com')) platformKey = 'Facebook';
+                        else if (url.includes('twitter.com') || url.includes('x.com')) platformKey = 'X (Twitter)';
+                        else if (url.includes('instagram.com')) platformKey = 'Instagram';
+                        else if (url.includes('linkedin.com')) platformKey = 'LinkedIn';
+                        else if (url.includes('youtube.com') || url.includes('youtu.be')) platformKey = 'Youtube';
+                    }
+
+                    if (!groupedLinks[platformKey]) groupedLinks[platformKey] = [];
+                    groupedLinks[platformKey].push(link);
+                });
+
+                let outputString = '';
+                const platformOrder = ['Facebook', 'X (Twitter)', 'Instagram', 'LinkedIn', 'Youtube', 'Altro'];
+                
+                platformOrder.forEach(platformName => {
+                    if (groupedLinks[platformName] && groupedLinks[platformName].length > 0) {
+                        outputString += `\n${platformName}:\n${groupedLinks[platformName].join('\n')}\n`;
+                    }
+                });
+                
+                return outputString.trim();
+            };
+
+            /**
+             * Genera il testo del report finale e lo mostra nell'area di output.
+             */
+            const generateReport = () => {
+                if (!recipientNameInput.value) {
+                    outputText.textContent = "Per favore, compila il campo 'Nome destinatario'.";
+                    return;
+                }
+                if (!excelData) {
+                    outputText.textContent = "Per favore, carica un file Excel per continuare.";
+                    return;
+                }
+
+                const formData = new FormData(form);
+                const saluto = formData.get('saluto');
+                const recipientName = recipientNameInput.value.trim();
+                const showChannels = formData.get('show-channels') === 'si';
+
+                const argument = getArgumentFromExcel(excelData);
+                if (!argument) {
+                    outputText.textContent = "Errore: Impossibile trovare la colonna 'Labels' o un argomento valido nel file Excel.";
+                    return;
+                }
+
+                const links = getLinksFromExcel(excelData, showChannels);
+                if (!links) {
+                    outputText.textContent = "Errore: Impossibile trovare la colonna 'View on platform' o dei link validi nel file Excel.";
+                    return;
+                }
+
+                const report = `${saluto} ${recipientName},
+ti confermo che siamo online sui nostri canali social con i post dedicati all'argomento «${argument}».
 
 I link dei post sono i seguenti:
-${a}
+${links}
 
 Un saluto,
-Fabio.`;outputText.textContent=i},getArgumentFromExcel=e=>{if(!e||0===e.length)return null;const t=Object.keys(e[0]).find(e=>"labels"===e.toLowerCase().trim());if(!t)return null;for(const o of e)if(o[t])return String(o[t]).split(";")[0].trim().replace(/^#/,"");return null},getLinksFromExcel=(e,t)=>{if(!e||0===e.length)return null;const o=Object.keys(e[0]).find(e=>"view on platform"===e.toLowerCase().trim());if(!o)return null;const n=e.map(e=>e[o]).filter(e=>e&&String(e).startsWith("http"));if(0===n.length)return null;if(!t)return n.join("\n");{const e={Facebook:[],"X (Twitter)":[],Instagram:[],Youtube:[],Altro:[]};n.forEach(t=>{const o=String(t);o.includes("facebook.com")?e.Facebook.push(o):o.includes("twitter.com")||o.includes("x.com")?e["X (Twitter)"].push(o):o.includes("instagram.com")?e.Instagram.push(o):o.includes("youtube.com")||o.includes("youtu.be")?e.Youtube.push(o):e.Altro.push(o)});let t="";for(const o in e)e[o].length>0&&(t+=`\n${o}:\n`,t+=e[o].join("\n"),t+="\n");return t.trim()}};form.addEventListener("input",generateReport),fileInput.addEventListener("change",e=>{const t=e.target.files[0];if(!t)return;setButtonFeedback(uploadLabel,"Caricamento...",!1);const o=new FileReader;o.onload=e=>{try{const t=new Uint8Array(e.target.result),o=XLSX.read(t,{type:"array"}),n=o.SheetNames[0],l=o.Sheets[n];excelData=XLSX.utils.sheet_to_json(l),setButtonFeedback(uploadLabel,"✓ Fatto! File Caricato",!0,3e3,"Carica File Excel"),generateReport()}catch(e){console.error("Errore nel parsing del file Excel:",e),excelData=null,outputText.textContent="Errore: il file selezionato non è un formato Excel valido o è corrotto.",setButtonFeedback(uploadLabel,"Errore nel caricamento",!0,3e3,"Carica File Excel")}},o.readAsArrayBuffer(t)}),saveBtn.addEventListener("click",()=>{const e={name:recipientNameInput.value,email:recipientEmailInput.value,saluto:form.saluto.value,showChannels:form["show-channels"].value};localStorage.setItem("reportFormData",JSON.stringify(e)),setButtonFeedback(saveBtn,"✓ Dati Salvati!",!0,2e3,"Salva Dati")});const loadData=()=>{const e=localStorage.getItem("reportFormData");if(e){const t=JSON.parse(e);recipientNameInput.value=t.name||"",recipientEmailInput.value=t.email||"",form.saluto.value=t.saluto||"Ciao",form["show-channels"].value=t.showChannels||"no"}};resetBtn.addEventListener("click",()=>{form.reset(),recipientNameInput.value="",recipientEmailInput.value="",excelData=null,outputText.textContent="Il report generato apparirà qui...",localStorage.removeItem("reportFormData"),fileInput.value="",setButtonFeedback(resetBtn,"✓ Form resettato",!0,2e3,"Resetta Form"),setButtonFeedback(uploadLabel,"Carica File Excel",!1)}),copyBtn.addEventListener("click",()=>{const e=outputText.textContent;e&&"Il report generato apparirà qui..."!==e&&!e.startsWith("Errore")&&!e.startsWith("Per favore")&&navigator.clipboard.writeText(e).then(()=>{copyBtn.style.backgroundColor="var(--main-yellow)",setTimeout(()=>{copyBtn.style.backgroundColor="transparent"},1500)}).catch(e=>{console.error("Errore durante la copia:",e),alert("Impossibile copiare il testo.")})});
+Fabio.`;
+                outputText.textContent = report;
+            };
+
+            /**
+             * Fornisce un feedback visivo temporaneo su un pulsante o etichetta.
+             */
+            const setButtonFeedback = (element, message, isTemporary = false, duration = 2000, originalText = "") => {
+                const original = originalText || element.textContent;
+                element.textContent = message;
+                if (isTemporary) {
+                    setTimeout(() => {
+                        element.textContent = original;
+                    }, duration);
+                }
+            };
             
-            // --- INIZIO LOGICA MODIFICATA (APPROCCIO FINALE) ---
+            // --- EVENT LISTENERS ---
+
+            form.addEventListener('input', generateReport);
+
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                setButtonFeedback(uploadLabel, 'Caricamento...');
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        excelData = XLSX.utils.sheet_to_json(worksheet);
+                        setButtonFeedback(uploadLabel, '✓ Fatto! File Caricato', true, 3000, 'Carica File Excel');
+                        generateReport();
+                    } catch (error) {
+                        console.error('Errore nel parsing del file Excel:', error);
+                        excelData = null;
+                        outputText.textContent = 'Errore: il file selezionato non è un formato Excel valido o è corrotto.';
+                        setButtonFeedback(uploadLabel, 'Errore nel caricamento', true, 3000, 'Carica File Excel');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+
+            saveBtn.addEventListener('click', () => {
+                const dataToSave = {
+                    name: recipientNameInput.value,
+                    email: recipientEmailInput.value,
+                    saluto: form.saluto.value,
+                    showChannels: form['show-channels'].value
+                };
+                localStorage.setItem('reportFormData', JSON.stringify(dataToSave));
+                setButtonFeedback(saveBtn, '✓ Dati Salvati!', true, 2000, 'Salva Dati');
+            });
+
+            resetBtn.addEventListener('click', () => {
+                form.reset();
+                recipientNameInput.value = '';
+                recipientEmailInput.value = '';
+                excelData = null;
+                outputText.textContent = 'Il report generato apparirà qui...';
+                localStorage.removeItem('reportFormData');
+                fileInput.value = ''; // Resetta anche l'input del file
+                setButtonFeedback(resetBtn, '✓ Form resettato', true, 2000, 'Resetta Form');
+                setButtonFeedback(uploadLabel, 'Carica File Excel');
+            });
+
+            copyBtn.addEventListener('click', () => {
+                const content = outputText.textContent;
+                if (content && !content.startsWith('Il report generato') && !content.startsWith('Errore') && !content.startsWith('Per favore')) {
+                    navigator.clipboard.writeText(content).then(() => {
+                        copyBtn.style.backgroundColor = 'var(--main-yellow)';
+                        setTimeout(() => {
+                            copyBtn.style.backgroundColor = 'transparent';
+                        }, 1500);
+                    }).catch(err => {
+                        console.error('Errore durante la copia:', err);
+                        alert('Impossibile copiare il testo.');
+                    });
+                }
+            });
+
             emailBtn.addEventListener('click', () => {
                 const email = recipientEmailInput.value;
                 const reportContent = outputText.textContent;
-                
+
                 if (!email) {
                     alert("Per favore, inserisci un indirizzo email nel campo apposito.");
                     return;
                 }
                 
-                // Controlla che il report sia stato generato e non sia un messaggio di errore/placeholder
                 if (!reportContent || reportContent.startsWith("Il report") || reportContent.startsWith("Errore") || reportContent.startsWith("Per favore")) {
                     alert("Per favore, genera prima un report valido per creare il link email.");
                     return;
                 }
 
-                // Costruisce la stringa mailto completa
                 const subject = "Report Social";
                 const body = encodeURIComponent(reportContent);
                 const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
 
-                // Copia la stringa mailto negli appunti
                 navigator.clipboard.writeText(mailtoLink).then(() => {
-                    // Fornisce un feedback visivo e un'istruzione chiara
                     alert("Link 'mailto' completo copiato negli appunti.\n\nOra incollalo nella barra degli indirizzi di una nuova scheda del browser.");
-                    
-                    // Feedback visivo sul bottone
                     emailBtn.style.backgroundColor = 'var(--main-yellow)';
                     setTimeout(() => { emailBtn.style.backgroundColor = 'transparent'; }, 2000);
-
                 }).catch(err => {
                     console.error("Errore durante la copia del link mailto:", err);
                     alert("Impossibile copiare il link mailto.");
                 });
             });
-            // --- FINE LOGICA MODIFICATA ---
+
+            // Carica i dati salvati all'avvio
+            const loadData = () => {
+                const savedData = localStorage.getItem('reportFormData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    recipientNameInput.value = data.name || '';
+                    recipientEmailInput.value = data.email || '';
+                    form.saluto.value = data.saluto || 'Ciao';
+                    form['show-channels'].value = data.showChannels || 'no';
+                }
+            };
             
-            const setButtonFeedback=(e,t,o=!1,n=2e3,l="")=>{e.textContent=t,o&&setTimeout(()=>{e.textContent=l},n)};
             loadData();
         });
     </script>
