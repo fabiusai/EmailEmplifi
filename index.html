@@ -95,16 +95,30 @@
 
             /**
              * Estrae l'argomento principale dalla colonna 'Labels'.
+             * L'argomento è la prima parte del testo (separato da ';') che NON è scritta interamente in maiuscolo.
+             * Esempio: da "#ISR;Argomento a piacere;#IST" estrae "Argomento a piacere".
              */
             const getArgumentFromExcel = (data) => {
                 if (!data || data.length === 0) return null;
                 const labelsColumn = findColumnName(Object.keys(data[0]), 'labels');
                 if (!labelsColumn) return null;
+
                 for (const row of data) {
-                    if (row[labelsColumn]) {
-                        return String(row[labelsColumn]).split(';')[0].trim().replace(/^#/, '');
+                    const labelsValue = row[labelsColumn];
+                    if (labelsValue) {
+                        const parts = String(labelsValue).split(';');
+                        for (const part of parts) {
+                            const trimmedPart = part.trim();
+                            // La condizione chiave: l'argomento è la parte che non è vuota e non è uguale alla sua versione in maiuscolo.
+                            // Questo esclude tag come "ISR" o "#IST" ma include "Argomento a piacere".
+                            if (trimmedPart && trimmedPart !== trimmedPart.toUpperCase()) {
+                                // Rimuove un eventuale '#' all'inizio e restituisce l'argomento pulito.
+                                return trimmedPart.replace(/^#/, '').trim();
+                            }
+                        }
                     }
                 }
+                // Se nessun argomento è stato trovato in nessuna riga
                 return null;
             };
 
@@ -192,7 +206,7 @@
 
                 const argument = getArgumentFromExcel(excelData);
                 if (!argument) {
-                    outputText.textContent = "Errore: Impossibile trovare la colonna 'Labels' o un argomento valido nel file Excel.";
+                    outputText.textContent = "Errore: Impossibile trovare un argomento valido (testo non maiuscolo) nella colonna 'Labels' del file Excel.";
                     return;
                 }
 
